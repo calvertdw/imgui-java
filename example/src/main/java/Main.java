@@ -16,6 +16,10 @@ public class Main extends Application {
     private final float[] flt = new float[1];
     private int count = 0;
 
+    static {
+        System.setProperty("java.library.path", "bin");
+    }
+
     @Override
     protected void configure(final Configuration config) {
         config.setTitle("Example Application");
