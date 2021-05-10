@@ -1,14 +1,8 @@
 import imgui.ImGui;
-import imgui.ImVec2;
 import imgui.extension.imguizmo.ImGuizmo;
 import imgui.extension.imguizmo.flag.Mode;
 import imgui.extension.imguizmo.flag.Operation;
-import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImFloat;
-
-import java.util.Arrays;
-
-import static org.lwjgl.opengl.GL11.*;
 
 public class ExampleImGuizmo {
 
@@ -46,15 +40,15 @@ public class ExampleImGuizmo {
 
     private static final float[] cameraView = {
         1.f, 0.f, 0.f, 0.f,
-            0.f, 1.f, 0.f, 0.f,
-            0.f, 0.f, 1.f, 0.f,
-            0.f, 0.f, 0.f, 1.f};
+        0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 1.f};
 
     private static final float[] identityMatrix = {
         1.f, 0.f, 0.f, 0.f,
-            0.f, 1.f, 0.f, 0.f,
-            0.f, 0.f, 1.f, 0.f,
-            0.f, 0.f, 0.f, 1.f};
+        0.f, 1.f, 0.f, 0.f,
+        0.f, 0.f, 1.f, 0.f,
+        0.f, 0.f, 0.f, 1.f};
 
     private static float[] perspective(float fovY, float aspect, float near, float far) {
         float ymax, xmax;
@@ -64,28 +58,28 @@ public class ExampleImGuizmo {
     }
 
     private static float[] frustum(float left, float right, float bottom, float top, float near, float far) {
-        float[] matrix16f = new float[16];
+        float[] r = new float[16];
         float temp = 2.0f * near;
         float temp2 = right - left;
         float temp3 = top - bottom;
         float temp4 = far - near;
-        matrix16f[0] = temp / temp2;
-        matrix16f[1] = 0.0f;
-        matrix16f[2] = 0.0f;
-        matrix16f[3] = 0.0f;
-        matrix16f[4] = 0.0f;
-        matrix16f[5] = temp / temp3;
-        matrix16f[6] = 0.0f;
-        matrix16f[7] = 0.0f;
-        matrix16f[8] = (right + left) / temp2;
-        matrix16f[9] = (top + bottom) / temp3;
-        matrix16f[10] = (-far - near) / temp4;
-        matrix16f[11] = -1.0f;
-        matrix16f[12] = 0.0f;
-        matrix16f[13] = 0.0f;
-        matrix16f[14] = (-temp * far) / temp4;
-        matrix16f[15] = 0.0f;
-        return matrix16f;
+        r[0] = temp / temp2;
+        r[1] = 0.0f;
+        r[2] = 0.0f;
+        r[3] = 0.0f;
+        r[4] = 0.0f;
+        r[5] = temp / temp3;
+        r[6] = 0.0f;
+        r[7] = 0.0f;
+        r[8] = (right + left) / temp2;
+        r[9] = (top + bottom) / temp3;
+        r[10] = (-far - near) / temp4;
+        r[11] = -1.0f;
+        r[12] = 0.0f;
+        r[13] = 0.0f;
+        r[14] = (-temp * far) / temp4;
+        r[15] = 0.0f;
+        return r;
     }
 
     private static float[] cross(float[] a, float[] b) {
@@ -148,10 +142,6 @@ public class ExampleImGuizmo {
 
     public static void show() {
 
-        ImGuizmo.setOrthographic(false);
-        ImGuizmo.beginFrame();
-        ImGuizmo.setEnabled(true);
-
         ImGui.setNextWindowSize(256, 256);
         ImGui.begin("Editor");
 
@@ -163,46 +153,48 @@ public class ExampleImGuizmo {
             firstFrame = false;
         }
 
-        if (ImGuizmo.isUsing()) ImGui.text("Using gizmo");
-        else ImGui.text("Not using gizmo");
-        ImGui.text(ImGuizmo.isOver() ? "Over gizmo" : "");
-        ImGui.sameLine();
-        ImGui.text(ImGuizmo.isOver(Operation.TRANSLATE) ? "Over translate gizmo" : "");
-        ImGui.sameLine();
-        ImGui.text(ImGuizmo.isOver(Operation.ROTATE) ? "Over rotate gizmo" : "");
-        ImGui.sameLine();
-        ImGui.text(ImGuizmo.isOver(Operation.SCALE) ? "Over scale gizmo" : "");
+        ImGuizmo.beginFrame();
+        if (ImGuizmo.isUsing()) {
+            ImGui.text("Using gizmo");
+            ImGui.text(ImGuizmo.isOver() ? "Over gizmo" : "");
+            ImGui.text(ImGuizmo.isOver(Operation.TRANSLATE) ? "Over translate gizmo" : "");
+            ImGui.text(ImGuizmo.isOver(Operation.ROTATE) ? "Over rotate gizmo" : "");
+            ImGui.text(ImGuizmo.isOver(Operation.SCALE) ? "Over scale gizmo" : "");
+        } else ImGui.text("Not using gizmo");
         ImGui.separator();
 
-        ImGuizmo.setId(0);
         editTransform();
         ImGui.end();
     }
 
     private static int currentMode = Mode.LOCAL;
     private static int currentGizmoOperation;
+
     private static boolean useSnap = false;
-    private static final float[] snap = {1f, 1f, 1f};
-    private static float[] bounds = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
-    private static float[] boundsSnap = {0.1f, 0.1f, 0.1f};
+
+    private static final float[] bounds = {-0.5f, -0.5f, -0.5f, 0.5f, 0.5f, 0.5f};
+    private static final float[] boundsSnap = {0.1f, 0.1f, 0.1f};
     private static boolean boundSizing = false;
     private static boolean boundSizingSnap = false;
+
+    private static final float[] viewManipulateSize = {128f, 128f};
+    private static float[] snapValue = {0.5f, 0.5f, 0.5f};
 
     private static void editTransform() {
 
         if (ImGui.isKeyPressed(90)) currentGizmoOperation = Operation.TRANSLATE;
         if (ImGui.isKeyPressed(69)) currentGizmoOperation = Operation.ROTATE;
         if (ImGui.isKeyPressed(72)) currentGizmoOperation = Operation.SCALE;
+        if (ImGui.isKeyPressed(83)) useSnap = !useSnap;
 
-        float[] matrixTranslation = new float[3];
-        float[] matrixRotation = new float[3];
-        float[] matrixScale = new float[3];
+        final float[] matrixTranslation = new float[3];
+        final float[] matrixRotation = new float[3];
+        final float[] matrixScale = new float[3];
 
-        ImGuizmo.decomposeMatrixToComponents(objectMatrix[0], matrixTranslation, matrixRotation, matrixScale);
+        ImGuizmo.recomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, objectMatrix[0]);
         ImGui.inputFloat3("Tr", matrixTranslation);
         ImGui.inputFloat3("Rt", matrixRotation);
         ImGui.inputFloat3("Sc", matrixScale);
-        ImGuizmo.recomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, objectMatrix[0]);
         if (currentGizmoOperation != Operation.SCALE) {
             if (ImGui.radioButton("Local", currentMode == Mode.LOCAL))
                 currentMode = Mode.LOCAL;
@@ -211,50 +203,63 @@ public class ExampleImGuizmo {
                 currentMode = Mode.WORLD;
         }
 
-        if (ImGui.isKeyPressed(83)) useSnap = !useSnap;
-        ImGui.checkbox("Snap Checkbox", useSnap);
-        ImGui.sameLine();
-
-        ImFloat snapBuffer = new ImFloat(snap[0]);
+        if (ImGui.checkbox("Snap Checkbox", useSnap)) useSnap = !useSnap;
+        ImFloat imFloatBuffer = new ImFloat(snapValue[0]);
         switch (currentGizmoOperation) {
-            case Operation.TRANSLATE -> ImGui.inputFloat("Translate Snap", snapBuffer);
-            case Operation.ROTATE -> ImGui.inputFloat("Rotate Snap", snapBuffer);
-            case Operation.SCALE -> ImGui.inputFloat("Scale Snap", snapBuffer);
+            case Operation.TRANSLATE -> ImGui.inputFloat3("Snap Value", snapValue);
+            case Operation.ROTATE -> {
+                ImGui.inputFloat("Angle Value", imFloatBuffer);
+                snapValue = imFloatBuffer.getData();
+            }
+            case Operation.SCALE -> {
+                ImGui.inputFloat("Scale Value", imFloatBuffer);
+                snapValue = imFloatBuffer.getData();
+            }
         }
-        snap[0] = snapBuffer.get();
-        snap[1] = snapBuffer.get();
-        snap[2] = snapBuffer.get();
 
-        /*if(ImGui.checkbox("Bound Sizing", boundSizing)) boundSizing = !boundSizing;
-        if (boundSizing)
-        {
+        if (ImGui.checkbox("Bound Sizing", boundSizing)) boundSizing = !boundSizing;
+        if (boundSizing) {
             ImGui.pushID(3);
-            if(ImGui.checkbox("BoundSizingSnap", boundSizingSnap)) boundSizingSnap = !boundSizingSnap;
+            if (ImGui.checkbox("BoundSizingSnap", boundSizingSnap)) boundSizingSnap = !boundSizingSnap;
             ImGui.sameLine();
             ImGui.inputFloat3("Snap", boundsSnap);
             ImGui.popID();
-        }*/
+        }
 
         ImGui.setNextWindowPos(800, 400);
         ImGui.setNextWindowSize(800, 400);
         ImGui.begin("Gizmo");
+
+        ImGuizmo.setOrthographic(false);
+        ImGuizmo.setEnabled(true);
         ImGuizmo.setDrawList();
+
         float windowWidth = ImGui.getWindowWidth();
         float windowHeight = ImGui.getWindowHeight();
         ImGuizmo.setRect(ImGui.getWindowPosX(), ImGui.getWindowPosY(), windowWidth, windowHeight);
-        float viewManipulateRight = ImGui.getWindowPosX() + windowWidth;
-        float viewManipulateTop = ImGui.getWindowPosY();
 
         float aspect = ImGui.getWindowSizeX() / ImGui.getWindowSizeY();
         float[] cameraProjection = perspective(27, aspect, 0.1f, 100f);
+
+        ImGuizmo.setId(0);
         ImGuizmo.drawGrid(cameraView, cameraProjection, identityMatrix, 100);
         ImGuizmo.drawCubes(cameraView, cameraProjection, objectMatrix[0]);
-        if(useSnap)
-            ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode, snap);
+
+        //So you might be cussing right now and saying why didn't you do this:
+        //ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode, useSnap ? snapValue : null, boundSizing ? bounds : null,...);
+        //Yes that way, it would've been better code-wise but when i give null parameter to it, it just crashes...
+        if (useSnap && boundSizing && boundSizingSnap)
+            ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode, snapValue, bounds, boundsSnap);
+        else if(useSnap && boundSizing)
+            ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode, snapValue, bounds);
+        else if(useSnap)
+            ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode, snapValue);
         else
             ImGuizmo.manipulate(cameraView, cameraProjection, objectMatrix[0], currentGizmoOperation, currentMode);
 
-        ImGuizmo.viewManipulate(cameraView, CAM_DISTANCE, new float[]{viewManipulateRight - 128, viewManipulateTop}, new float[]{128, 128}, 0x10101010);
+        float viewManipulateRight = ImGui.getWindowPosX() + windowWidth;
+        float viewManipulateTop = ImGui.getWindowPosY();
+        ImGuizmo.viewManipulate(cameraView, CAM_DISTANCE, new float[]{viewManipulateRight - 128, viewManipulateTop}, viewManipulateSize, 0x10101010);
 
         ImGui.end();
     }

@@ -140,7 +140,7 @@ public final class ImGuizmo {
     */
 
     /**
-     * This will allow us to draw an arbitrary cube in the world.
+     * Drawing an arbitrary cube in the world.
      * Mainly for debugging purposes
      */
     public static void drawCubes(float[] view, float[] projection, float[]... cubeMatrices) {
@@ -158,9 +158,6 @@ public final class ImGuizmo {
         ImGuizmo::DrawGrid(view, projection, matrix, gridSize);
     */
 
-    /**
-     * This will allow us to draw an arbitrary cube in the world.
-     */
     public static void drawGrid(float[] view, float[] projection, float[] matrix, int gridSize) {
         nDrawGrid(view, projection, matrix, gridSize);
     }
@@ -170,7 +167,19 @@ public final class ImGuizmo {
     */
 
     private native static void nManipulate(float[] view, float[] projection, int operation, int mode, float[] matrix, float[] snap);/*
-        ImGuizmo::Manipulate(view, projection, (ImGuizmo::OPERATION) operation, (ImGuizmo::MODE) mode, matrix, NULL, snap, NULL, NULL);
+        ImGuizmo::Manipulate(view, projection, (ImGuizmo::OPERATION) operation, (ImGuizmo::MODE) mode, matrix, NULL, snap);
+    */
+
+    private native static void nManipulate(float[] view, float[] projection, int operation, int mode, float[] matrix, final float[] snap, final float[] bounds);/*
+        ImGuizmo::Manipulate(view, projection, (ImGuizmo::OPERATION) operation, (ImGuizmo::MODE) mode, matrix, NULL, snap, bounds, NULL);
+    */
+
+    private native static void nManipulate(float[] view, float[] projection, int operation, int mode, float[] matrix, final float[] snap, final float[] bounds, final float[] boundsSnap);/*
+        ImGuizmo::Manipulate(view, projection, (ImGuizmo::OPERATION) operation, (ImGuizmo::MODE) mode, matrix, NULL, snap, bounds, boundsSnap);
+    */
+
+    private native static void nManipulate(float[] view, float[] projection, int operation, int mode, float[] matrix, float[] deltaMatrix, final float[] snap, final float[] bounds, final float[] boundsSnap);/*
+        ImGuizmo::Manipulate(view, projection, (ImGuizmo::OPERATION) operation, (ImGuizmo::MODE) mode, matrix, deltaMatrix, snap, bounds, boundsSnap);
     */
 
     /**
@@ -181,10 +190,31 @@ public final class ImGuizmo {
     }
 
     /**
-     * Manipulating the given object matrix
+     * Manipulating the given object matrix with snap feature enabled!
      */
     public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap){
         nManipulate(view, projection, operation, mode, modelMatrix, snap);
+    }
+
+    /**
+     * Manipulating the given object matrix with snap and bounds feature enabled!
+     */
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds){
+        nManipulate(view, projection, operation, mode, modelMatrix, snap, bounds);
+    }
+
+    /**
+     * Manipulating the given object matrix with snap and bounds(snap) feature enabled!
+     */
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap){
+        nManipulate(view, projection, operation, mode, modelMatrix, snap, bounds, boundsSnap);
+    }
+
+    /**
+     * Manipulating the given object matrix
+     */
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, float[] deltaMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap){
+        nManipulate(view, projection, operation, mode, modelMatrix, deltaMatrix, snap, bounds, boundsSnap);
     }
 
     private static native void nViewManipulate(float[] view, float length, float[] position, float[] size, int color);/*
