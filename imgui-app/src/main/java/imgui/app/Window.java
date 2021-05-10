@@ -1,6 +1,7 @@
 package imgui.app;
 
 import imgui.ImGui;
+import imgui.extension.imguizmo.ImGuizmo;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
@@ -163,6 +164,7 @@ public abstract class Window {
         GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
         imGuiGlfw.newFrame();
         ImGui.newFrame();
+        ImGuizmo.beginFrame();
     }
 
     /**

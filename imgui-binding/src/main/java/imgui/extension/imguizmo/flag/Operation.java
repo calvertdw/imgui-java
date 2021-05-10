@@ -62,7 +62,7 @@ public final class Operation {
     /*
      * Rotating all axis
      */
-    public static final int ROTATE = ROTATE_X | ROTATE_Y | ROTATE_Z;
+    public static final int ROTATE = ROTATE_X | ROTATE_Y | ROTATE_Z | ROTATE_SCREEN;
 
     /*
      * Scaling all axis

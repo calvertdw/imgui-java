@@ -2,22 +2,18 @@ package imgui.extension.imguizmo;
 
 import imgui.ImDrawList;
 import imgui.ImGui;
-import imgui.ImVec2;
-import imgui.type.ImFloat;
 
 public final class ImGuizmo {
 
-    private static final boolean[] booleanBuffer = new boolean[1];
-    private static final float[] floatBuffer = new float[3]; //for snap
+    private static float[] matrices = null; //for drawCubes()
 
      /*JNI
-       #include <imgui.h>
-       #include <ImGuizmo.h>
-       #include "jni_common.h"
-    */
+       #include "_common.h"
+       #include "ImGuizmo.h"
+     */
 
-    private static native void nEnabled(boolean buffer); /*
-        ImGuizmo::Enable(&buffer);
+    private static native void nEnabled(boolean enabled); /*
+        ImGuizmo::Enable(enabled);
     */
 
     /**
@@ -27,28 +23,26 @@ public final class ImGuizmo {
         nEnabled(isEnabled);
     }
 
-    private static native void nIsUsing(boolean[] buffer); /*
-        buffer[0] = ImGuizmo::IsUsing();
+    private static native boolean nIsUsing(); /*
+        return (jboolean) ImGuizmo::IsUsing();
     */
 
     /**
      * Checks to see if we're using the Gizmo
      */
     public static boolean isUsing() {
-        nIsUsing(booleanBuffer);
-        return booleanBuffer[0];
+        return nIsUsing();
     }
 
-    private static native void nIsOver(boolean[] buffer); /*
-        buffer[0] = ImGuizmo::IsOver();
+    private static native boolean nIsOver(); /*
+        return (jboolean) ImGuizmo::IsOver();
     */
 
     /**
      * Checks to see if we're over the Gizmo
      */
     public static boolean isOver() {
-        nIsOver(booleanBuffer);
-        return booleanBuffer[0];
+        return nIsOver();
     }
 
     private static native void nSetDrawList(long pointer); /*
@@ -82,24 +76,42 @@ public final class ImGuizmo {
         ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
     */
 
-    /**
-     * Decomposing or disassembling the matrix to its components
-     * Call this before recomposing.
+    /*
+     * helper functions for manualy editing translation/rotation/scale with an input float
+     * translation, rotation and scale float points to 3 floats each
+     * Angles are in degrees (more suitable for human editing)
+     * example:
+     * float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+     * ImGuizmo::DecomposeMatrixToComponents(gizmoMatrix.m16, matrixTranslation, matrixRotation, matrixScale);
+     * ImGui::InputFloat3("Tr", matrixTranslation, 3);
+     * ImGui::InputFloat3("Rt", matrixRotation, 3);
+     * ImGui::InputFloat3("Sc", matrixScale, 3);
+     * ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, gizmoMatrix.m16);
+     * These functions have some numerical stability issues for now. Use with caution.
      */
     public static void decomposeMatrixToComponents(float[] matrix, float[] translation, float[] rotation, float[] scale) {
         nDecomposeMatrixToComponents(matrix, translation, rotation, scale);
     }
 
-    private static native void nRecomposeMatrixFromComponents(float[] translation, float[] rotation, float[] scale, float[] matrix); /*
+    private static native void nRecomposeMatrixFromComponents(float[] matrix, float[] translation, float[] rotation, float[] scale); /*
         ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale, matrix);
     */
 
-    /**
-     * Recompose the given matrix to its original form.
-     * Call this after decomposing.
+    /*
+     * helper functions for manualy editing translation/rotation/scale with an input float
+     * translation, rotation and scale float points to 3 floats each
+     * Angles are in degrees (more suitable for human editing)
+     * example:
+     * float matrixTranslation[3], matrixRotation[3], matrixScale[3];
+     * ImGuizmo::DecomposeMatrixToComponents(gizmoMatrix.m16, matrixTranslation, matrixRotation, matrixScale);
+     * ImGui::InputFloat3("Tr", matrixTranslation, 3);
+     * ImGui::InputFloat3("Rt", matrixRotation, 3);
+     * ImGui::InputFloat3("Sc", matrixScale, 3);
+     * ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, gizmoMatrix.m16);
+     * These functions have some numerical stability issues for now. Use with caution.
      */
     public static void recomposeMatrixFromComponents(float[] matrix, float[] translation, float[] rotation, float[] scale) {
-        nRecomposeMatrixFromComponents(translation, rotation, scale, matrix);
+        nRecomposeMatrixFromComponents(matrix, translation, rotation, scale);
     }
 
     public static native void nSetRect(float x, float y, float width, float height); /*
@@ -111,16 +123,6 @@ public final class ImGuizmo {
      */
     public static void setRect(float x, float y, float width, float height) {
         nSetRect(x, y, width, height);
-    }
-
-
-    /**
-     * This will set the rect position to the default current rect position
-     */
-    public static void setRect() {
-        ImVec2 pos = ImGui.getWindowPos();
-        ImVec2 size = ImGui.getWindowSize();
-        setRect(pos.x, pos.y, size.x, size.y);
     }
 
 
@@ -141,16 +143,17 @@ public final class ImGuizmo {
 
     /**
      * Drawing an arbitrary cube in the world.
-     * Mainly for debugging purposes
+     * NOTE: Supports up to 4 cubes max. since this method should only be used for debugging purposes
      */
     public static void drawCubes(float[] view, float[] projection, float[]... cubeMatrices) {
-        float[] matrices = new float[cubeMatrices.length * 16];
-        int index = 0;
-        for (int i = 0; i < cubeMatrices.length; i++) {
-            for (int j = 0; j < 16; j++) {
-                matrices[index++] = cubeMatrices[i][j];
-            }
+        if (cubeMatrices.length > 4) {
+            System.err.println("Drawing cubes with ImGuizmo only supports up to 4 cubes because it should only be used for debugging purposes");
+            return;
         }
+        if (matrices == null) matrices = new float[4 * 16]; //allocating enough, if someone wants to render cubes for debugging
+        int index = 0;
+        for (float[] cubeMatrix : cubeMatrices)
+            System.arraycopy(cubeMatrix, 0, matrices, index++ * cubeMatrix.length, cubeMatrix.length); //copying like that does perform better than regular for loops
         nDrawCubes(view, projection, matrices, cubeMatrices.length);
     }
 
@@ -192,28 +195,28 @@ public final class ImGuizmo {
     /**
      * Manipulating the given object matrix with snap feature enabled!
      */
-    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap){
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap) {
         nManipulate(view, projection, operation, mode, modelMatrix, snap);
     }
 
     /**
      * Manipulating the given object matrix with snap and bounds feature enabled!
      */
-    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds){
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds) {
         nManipulate(view, projection, operation, mode, modelMatrix, snap, bounds);
     }
 
     /**
      * Manipulating the given object matrix with snap and bounds(snap) feature enabled!
      */
-    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap){
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap) {
         nManipulate(view, projection, operation, mode, modelMatrix, snap, bounds, boundsSnap);
     }
 
     /**
      * Manipulating the given object matrix
      */
-    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, float[] deltaMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap){
+    public static void manipulate(float[] view, float[] projection, float[] modelMatrix, float[] deltaMatrix, int operation, int mode, float[] snap, float[] bounds, float[] boundsSnap) {
         nManipulate(view, projection, operation, mode, modelMatrix, deltaMatrix, snap, bounds, boundsSnap);
     }
 

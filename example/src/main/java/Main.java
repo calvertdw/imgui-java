@@ -1,6 +1,7 @@
 import imgui.*;
 import imgui.app.Application;
 import imgui.app.Configuration;
+import imgui.extension.imguizmo.ImGuizmo;
 import imgui.extension.imnodes.ImNodes;
 import imgui.flag.ImGuiConfigFlags;
 import imgui.flag.ImGuiInputTextFlags;
