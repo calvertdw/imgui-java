@@ -215,17 +215,19 @@ public class ExampleImGuizmo {
         if (ImGui.checkbox("Snap Checkbox", useSnap)) useSnap = !useSnap;
         ImFloat imFloatBuffer = new ImFloat(snapValue[0]);
         switch (currentGizmoOperation) {
-            case Operation.TRANSLATE -> ImGui.inputFloat3("Snap Value", snapValue);
-            case Operation.ROTATE -> {
+            case Operation.TRANSLATE:
+                ImGui.inputFloat3("Snap Value", snapValue);
+                break;
+            case Operation.ROTATE:
                 ImGui.inputFloat("Angle Value", imFloatBuffer);
-                float value = imFloatBuffer.get();
-                Arrays.fill(snapValue, value); //avoiding allocation
-            }
-            case Operation.SCALE -> {
+                float rotateValue = imFloatBuffer.get();
+                Arrays.fill(snapValue, rotateValue); //avoiding allocation
+                break;
+            case Operation.SCALE:
                 ImGui.inputFloat("Scale Value", imFloatBuffer);
-                float value = imFloatBuffer.get();
-                Arrays.fill(snapValue, value);
-            }
+                float scaleValue = imFloatBuffer.get();
+                Arrays.fill(snapValue, scaleValue);
+                break;
         }
 
         if (ImGui.checkbox("Bound Sizing", boundSizing)) boundSizing = !boundSizing;
