@@ -75,7 +75,7 @@ public final class ImGuizmo {
         ImGuizmo::BeginFrame();
     */
 
-    private static native void nDecomposeMatrixToComponents(final float[] matrix, final float[] translation, final float[] rotation, final float[] scale); /*
+    private static native void nDecomposeMatrixToComponents(float[] matrix, float[] translation, float[] rotation, float[] scale); /*
         ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
     */
 
