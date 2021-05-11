@@ -2,7 +2,8 @@ package imgui.extension.imguizmo.flag;
 
 public final class Operation {
 
-    private Operation(){}
+    private Operation() {
+    }
 
     /*
      * Translating X axis
